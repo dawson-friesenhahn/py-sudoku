@@ -227,6 +227,10 @@ class Sudoku:
             shuffle(positions)
             self.board = [[(i + 1) if i == positions[j]
                            else Sudoku._empty_cell_value for i in range(self.size)] for j in range(self.size)]
+            
+            new_Sudoku = self.difficulty(difficulty)
+            self.board = new_Sudoku.board
+            self.difficulty = new_Sudoku.difficulty
 
     def solve(self, assert_solvable = False):
         # type: (bool) -> Sudoku
