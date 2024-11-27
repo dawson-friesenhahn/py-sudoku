@@ -240,8 +240,9 @@ class Sudoku:
         :param assert_solvable: Boolean for if you wish to raise an UnsolvableSodoku error when the board is invalid. Defaults to `false`.
         :raises UnsolvableSudoku:
         """
-        solution = _SudokuSolver(self)._solve() if self.validate() else None
-        if solution:
+        solution = _SudokuSolver(self)._solve() if self.__constraints_satisfied() else None
+        solution_valid= solution.get_difficulty() !=-2 if solution else False
+        if solution_valid:
             return solution
         elif assert_solvable:
             raise UnsolvableSudoku('No solution found')
@@ -264,30 +265,10 @@ class Sudoku:
 
     def validate(self):
         # type: () -> bool
-        row_numbers = [[False for _ in range(self.size)]
-                       for _ in range(self.size)]
-        col_numbers = [[False for _ in range(self.size)]
-                       for _ in range(self.size)]
-        box_numbers = [[False for _ in range(self.size)]
-                       for _ in range(self.size)]
-
-        for row in range(self.size):
-            for col in range(self.size):
-                cell = self.board[row][col]
-                box = (row // self.height) * self.height + (col // self.width)
-                if cell == Sudoku._empty_cell_value:
-                    continue
-                elif isinstance(cell, int):
-                    if row_numbers[row][cell - 1]:
-                        return False
-                    elif col_numbers[col][cell - 1]:
-                        return False
-                    elif box_numbers[box][cell - 1]:
-                        return False
-                    row_numbers[row][cell - 1] = True
-                    col_numbers[col][cell - 1] = True
-                    box_numbers[box][cell - 1] = True
-        return True
+        '''
+        Returns true if this Sudoku board can be solved
+        '''
+        return self.solve().get_difficulty() != -2
 
     @ staticmethod
     def _copy_board(board):
@@ -353,6 +334,51 @@ class Sudoku:
         Prints the puzzle to the terminal, with more information
         """
         print(self.__str__())
+    
+    def __constraints_satisfied(self) -> bool:
+        # type: () -> bool
+        """
+        Returns true if there are no duplicated numbers in any row, column, or box. Note that this does not necessarily mean that the puzzle can be solved! For example, this puzzle will return true for _constraints_satisfied(), but no solution exists for this puzzle because there is nowhere for a 9 in the upper-left box.
+
+        +-------+-------+-------+
+        |     8 | 6 7 3 |   4 9 |
+        |     7 |       |   8 3 |
+        |   3   | 9 8   |   5 7 |
+        +-------+-------+-------+
+        |     2 | 7     | 9 3 8 |
+        | 8 9   | 3     | 7 2   |
+        | 7   3 | 8 2 9 | 4 1   |
+        +-------+-------+-------+
+        |   8   |   6 7 | 3 9 2 |
+        | 3 7 5 |   9 2 | 8 6   |
+        | 9 2 6 |   3 8 | 5 7   |
+        +-------+-------+-------+
+        """
+        
+        row_numbers = [[False for _ in range(self.size)]
+                       for _ in range(self.size)]
+        col_numbers = [[False for _ in range(self.size)]
+                       for _ in range(self.size)]
+        box_numbers = [[False for _ in range(self.size)]
+                       for _ in range(self.size)]
+
+        for row in range(self.size):
+            for col in range(self.size):
+                cell = self.board[row][col]
+                box = (row // self.height) * self.height + (col // self.width)
+                if cell == Sudoku._empty_cell_value:
+                    continue
+                elif isinstance(cell, int):
+                    if row_numbers[row][cell - 1]:
+                        return False
+                    elif col_numbers[col][cell - 1]:
+                        return False
+                    elif box_numbers[box][cell - 1]:
+                        return False
+                    row_numbers[row][cell - 1] = True
+                    col_numbers[col][cell - 1] = True
+                    box_numbers[box][cell - 1] = True
+        return True
 
     def __format_board_ascii(self):
         # type: () -> str
